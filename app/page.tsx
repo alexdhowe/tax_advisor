@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { prisma } from '@/lib/prisma'
 import { ClientCard } from '@/components/clients/ClientCard'
 import { MatterCard } from '@/components/matters/MatterCard'
