@@ -1,9 +1,10 @@
+import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
 import { individualAgentConfig } from './individual'
 import { corporateAgentConfig } from './corporate'
 import { partnershipAgentConfig } from './partnership'
-import { orchestratorAgentConfig } from './orchestrator-config'
-export { orchestratorAgentConfig, ORCHESTRATOR_AGENT_ID } from './orchestrator-config'
+import { orchestratorAgentConfig, ORCHESTRATOR_AGENT_ID } from './orchestrator-config'
+export { orchestratorAgentConfig, ORCHESTRATOR_AGENT_ID }
 
 export const orchestratorTools: Anthropic.Tool[] = [
   {
