@@ -1,7 +1,7 @@
 import { individualAgentConfig, INDIVIDUAL_AGENT_ID } from './individual'
 import { corporateAgentConfig, CORPORATE_AGENT_ID } from './corporate'
 import { partnershipAgentConfig, PARTNERSHIP_AGENT_ID } from './partnership'
-import { orchestratorAgentConfig, ORCHESTRATOR_AGENT_ID } from './orchestrator'
+import { orchestratorAgentConfig, ORCHESTRATOR_AGENT_ID } from './orchestrator-config'
 
 export type AgentType = 'individual' | 'corporate' | 'partnership' | 'orchestrator'
 
