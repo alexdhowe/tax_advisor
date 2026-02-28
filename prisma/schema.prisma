@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ClientType {
+  individual
+  corporation
+  partnership
+}
+
+enum MatterStatus {
+  active
+  completed
+  archived
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+model Client {
+  id        String     @id @default(cuid())
+  name      String
+  type      ClientType
+  taxId     String?
+  notes     String?
+  createdAt DateTime   @default(now())
+  matters   Matter[]
+}
+
+model Matter {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      MatterStatus @default(active)
+  createdAt   DateTime     @default(now())
+  messages    Message[]
+  documents   Document[]
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  matterId   String
+  matter     Matter      @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  role       MessageRole
+  content    String      @db.Text
+  agentType  String?
+  authorName String?
+  createdAt  DateTime    @default(now())
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  matterId      String
+  matter        Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  filename      String
+  fileType      String
+  filePath      String
+  extractedText String?  @db.Text
+  createdAt     DateTime @default(now())
+}
