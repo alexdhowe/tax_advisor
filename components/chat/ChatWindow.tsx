@@ -176,13 +176,16 @@ export function ChatWindow({ matterId, selectedAgent }: ChatWindowProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 p-4">
-        <div className="flex flex-col gap-4 min-h-full">
+    <div className="flex flex-col h-full bg-slate-50">
+      <ScrollArea className="flex-1 px-5 py-5">
+        <div className="flex flex-col gap-5 max-w-3xl mx-auto">
           {messages.length === 0 && !streaming.isStreaming && (
-            <div className="flex flex-col items-center justify-center h-48 text-center">
-              <p className="text-gray-400 text-sm">No messages yet.</p>
-              <p className="text-gray-300 text-xs mt-1">Select an agent and ask your first tax question.</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-4">
+                <span className="text-xl">⚖️</span>
+              </div>
+              <p className="text-slate-600 font-medium text-sm">Ready to advise</p>
+              <p className="text-slate-400 text-xs mt-1">Select an agent on the right and ask your first tax question.</p>
             </div>
           )}
           {messages.map(msg => (

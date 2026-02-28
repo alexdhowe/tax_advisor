@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Button } from '@/components/ui/button'
+import { FileText, FileSpreadsheet, File, Upload, Loader2, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Document {
   id: string
@@ -18,54 +19,39 @@ interface DocumentListProps {
 }
 
 function formatDate(date: string | Date) {
-  return new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric' })
+  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function fileIcon(fileType: string) {
-  if (fileType.includes('pdf')) return '📄'
-  if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('xls')) return '📊'
-  if (fileType.includes('csv') || fileType.includes('text')) return '📝'
-  return '📎'
+function FileIcon({ fileType }: { fileType: string }) {
+  if (fileType.includes('pdf'))
+    return <FileText className="w-3.5 h-3.5 text-red-400 shrink-0" />
+  if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('xls') || fileType.includes('csv'))
+    return <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+  return <File className="w-3.5 h-3.5 text-slate-400 shrink-0" />
 }
 
 export function DocumentList({ matterId, documents, onUpload }: DocumentListProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0]
-      if (!file) return
-
-      setUploading(true)
-      setError(null)
-
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('matterId', matterId)
-
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!res.ok) {
-          const errData = await res.json()
-          throw new Error(errData.error || 'Upload failed')
-        }
-
-        const doc = await res.json()
-        onUpload(doc)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Upload failed'
-        setError(msg)
-      } finally {
-        setUploading(false)
-      }
-    },
-    [matterId, onUpload]
-  )
+  const onDrop = useCallback(async (accepted: File[]) => {
+    const file = accepted[0]
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('matterId', matterId)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed')
+      onUpload(await res.json())
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }, [matterId, onUpload])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -83,24 +69,27 @@ export function DocumentList({ matterId, documents, onUpload }: DocumentListProp
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-700">Documents</h3>
+      {/* Header */}
+      <div className="px-3 py-3 border-b border-slate-100">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Documents</p>
       </div>
 
-      {/* Document list */}
+      {/* List */}
       <div className="flex-1 overflow-y-auto">
         {documents.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center p-4">No documents uploaded</p>
+          <div className="flex flex-col items-center justify-center h-24 px-3">
+            <p className="text-[11px] text-slate-400 text-center">No documents uploaded yet</p>
+          </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-slate-50 px-1 py-1">
             {documents.map(doc => (
-              <li key={doc.id} className="flex items-start gap-2 px-3 py-2 hover:bg-gray-50">
-                <span className="text-base mt-0.5">{fileIcon(doc.fileType)}</span>
+              <li key={doc.id} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <FileIcon fileType={doc.fileType} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-800 truncate" title={doc.filename}>
+                  <p className="text-[11px] font-medium text-slate-700 truncate" title={doc.filename}>
                     {doc.filename}
                   </p>
-                  <p className="text-xs text-gray-400">{formatDate(doc.createdAt)}</p>
+                  <p className="text-[10px] text-slate-400">{formatDate(doc.createdAt)}</p>
                 </div>
               </li>
             ))}
@@ -108,31 +97,40 @@ export function DocumentList({ matterId, documents, onUpload }: DocumentListProp
         )}
       </div>
 
-      {/* Upload zone */}
-      <div className="p-3 border-t border-gray-200">
+      {/* Drop zone */}
+      <div className="p-3 border-t border-slate-100">
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors ${
-            isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-          } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={cn(
+            'border-2 border-dashed rounded-xl px-3 py-4 text-center cursor-pointer transition-all duration-150',
+            isDragActive
+              ? 'border-indigo-400 bg-indigo-50'
+              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+            uploading && 'opacity-50 cursor-not-allowed'
+          )}
         >
           <input {...getInputProps()} />
           {uploading ? (
-            <div className="flex flex-col items-center gap-1">
-              <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs text-gray-500">Uploading...</span>
+            <div className="flex flex-col items-center gap-1.5">
+              <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+              <span className="text-[11px] text-slate-500">Uploading...</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1">
-              <span className="text-lg">📤</span>
-              <span className="text-xs text-gray-500">
-                {isDragActive ? 'Drop file here' : 'Upload document'}
+              <Upload className={cn('w-4 h-4', isDragActive ? 'text-indigo-500' : 'text-slate-400')} />
+              <span className="text-[11px] font-medium text-slate-600">
+                {isDragActive ? 'Drop to upload' : 'Upload document'}
               </span>
-              <span className="text-xs text-gray-400">PDF, XLSX, CSV, TXT · Max 10MB</span>
+              <span className="text-[10px] text-slate-400">PDF · XLSX · CSV · TXT</span>
             </div>
           )}
         </div>
-        {error && <p className="text-xs text-red-500 mt-2 text-center">{error}</p>}
+        {error && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <AlertCircle className="w-3 h-3 text-red-500 shrink-0" />
+            <p className="text-[10px] text-red-500">{error}</p>
+          </div>
+        )}
       </div>
     </div>
   )
