@@ -61,10 +61,14 @@ Upload → `app/api/upload/route.ts` → saved to `UPLOAD_DIR` with UUID filenam
 - **Tailwind v4** with CSS-first config (`app/globals.css` — no `tailwind.config.ts`)
 - shadcn/ui components in `components/ui/`; custom components in `components/{agents,chat,clients,matters,documents}/`
 - Agent color scheme: Individual=blue, Corporate=emerald, Partnership=violet, Orchestrator=amber
-- The layout (`app/layout.tsx`) is a `'use client'` component (needed for `usePathname` active link state). Metadata is set via `<head>` tags directly rather than the Next.js `metadata` export.
+- `app/layout.tsx` is a **Server Component** that imports `<Sidebar />` from `components/Sidebar.tsx`. The Sidebar is a `'use client'` component that uses `usePathname` for active link state. Never add `'use client'` to `app/layout.tsx` — it breaks CSS delivery in standalone mode.
+- `lib/prisma.ts`, `lib/documents.ts`, and `lib/agents/orchestrator.ts` all have `import 'server-only'` as their first line to prevent accidental inclusion in client bundles (would cause a build-time error if violated).
+- `lib/agents/index.ts` imports agent configs from `orchestrator-config.ts` (not `orchestrator.ts`) so the Anthropic SDK is never pulled into client bundles.
+- `app/page.tsx` and `app/clients/page.tsx` have `export const dynamic = 'force-dynamic'` to prevent Next.js from attempting Prisma-based prerendering at build time.
 - Chat markdown rendered via `react-markdown` with custom `.chat-prose` CSS class (defined in `globals.css`, not Tailwind `prose`)
 
 ### Deployment (Render)
-Build command: `npm install && npx prisma generate && npx prisma db push && npm run build`
+Build command: `npm install && npx prisma generate && npx prisma db push && npm run build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public`
 Start command: `node .next/standalone/server.js`
 Persistent disk mounted at `/opt/render/project/src/uploads` for file storage.
+The `cp` commands after build are required — Next.js standalone mode does not automatically copy `.next/static/` into the standalone folder, so CSS/JS would 404 without them.
