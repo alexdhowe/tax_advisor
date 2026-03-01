@@ -5,7 +5,6 @@ import { MessageBubble } from './MessageBubble'
 import { StreamingIndicator } from './StreamingIndicator'
 import { ChatInput } from './ChatInput'
 import { AgentType } from '@/lib/agents'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface Message {
   id: string
@@ -41,8 +40,10 @@ export function ChatWindow({ matterId, selectedAgent }: ChatWindowProps) {
   })
   const [authorName, setAuthorName] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const lastFetchRef = useRef<number>(0)
+  const isNearBottomRef = useRef(true)
 
   // Load author name from localStorage
   useEffect(() => {
@@ -82,9 +83,18 @@ export function ChatWindow({ matterId, selectedAgent }: ChatWindowProps) {
     return () => clearInterval(interval)
   }, [streaming.isStreaming, fetchMessages])
 
-  // Scroll to bottom when messages change
+  // Track whether user is near the bottom
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100
+  }, [])
+
+  // Auto-scroll only when user is already near the bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isNearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages, streaming.partialText])
 
   const handleSend = async (message: string) => {
@@ -177,7 +187,11 @@ export function ChatWindow({ matterId, selectedAgent }: ChatWindowProps) {
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
-      <ScrollArea className="flex-1 px-5 py-5">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto min-h-0 px-5 py-5"
+      >
         <div className="flex flex-col gap-5 max-w-3xl mx-auto">
           {messages.length === 0 && !streaming.isStreaming && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -213,7 +227,7 @@ export function ChatWindow({ matterId, selectedAgent }: ChatWindowProps) {
           )}
           <div ref={bottomRef} />
         </div>
-      </ScrollArea>
+      </div>
       <ChatInput
         onSend={handleSend}
         disabled={streaming.isStreaming}
