@@ -1,5 +1,11 @@
 import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
+
+function getClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured.')
+  return new Anthropic({ apiKey })
+}
 import { individualAgentConfig } from './individual'
 import { corporateAgentConfig } from './corporate'
 import { partnershipAgentConfig } from './partnership'
@@ -80,7 +86,7 @@ export async function callSpecialist(
   documentContext: string,
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<string> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = getClient()
 
   let agentConfig
   switch (call.specialist) {
@@ -133,7 +139,7 @@ export async function* runOrchestrator(
   documentContext: string,
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): AsyncGenerator<{ type: string; [key: string]: unknown }> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const client = getClient()
 
   const fullSystemPrompt = `${orchestratorAgentConfig.systemPrompt}
 

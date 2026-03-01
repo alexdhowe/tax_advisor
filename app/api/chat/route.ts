@@ -5,7 +5,11 @@ import { buildDocumentContext } from '@/lib/documents'
 import { runOrchestrator } from '@/lib/agents/orchestrator'
 import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+function getAnthropicClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured. Set it in the Render dashboard under Environment Variables.')
+  return new Anthropic({ apiKey })
+}
 
 function buildMatterContext(matter: {
   title: string
@@ -162,7 +166,7 @@ ${documentContext}`
 
     let fullAssistantResponse = ''
 
-    const anthropicStream = await client.messages.stream({
+    const anthropicStream = await getAnthropicClient().messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: fullSystemPrompt,
